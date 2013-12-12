@@ -4,6 +4,12 @@
     id="com.siteforum.plugins.geofencing"
     version="0.0.1">
     <name>Geofencing</name>   
+
+    <asset src="www/Geofencing.js" target="Geofencing.js" />
+    <asset src="www/Geofencing.js" target="www/Geofencing.js" />
+    <asset src="www/Geofencing.js" target="www/js/Geofencing.js" />
+    <asset src="www/Geofencing.js" target="js/Geofencing.js" />
+
     <!-- ios -->
     <platform name="ios">    
         <config-file target="config.xml" parent="/*">
