@@ -20,5 +20,7 @@
         </js-module>
         <header-file src="src/ios/Geofencing.h" />
 	    <source-file src="src/ios/Geofencing.m" />
+        <header-file src="src/ios/GeofencingHelper.h" />
+        <source-file src="src/ios/GeofencingHelper.m" />
     </platform>
 </plugin>
