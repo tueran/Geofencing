@@ -30,7 +30,7 @@ static GeofencingHelper *sharedGeofencingHelper = nil;
     self.locationInfo = nil;
     self.locationCallbacks = nil;
     self.geofenceCallbacks = nil;
-    [super dealloc];
+//    [super dealloc];
 }
 
 @end
@@ -46,7 +46,7 @@ static GeofencingHelper *sharedGeofencingHelper = nil;
 - (void) saveGeofenceCallbackId:(NSString *) callbackId {
     NSLog(@"callbackId: %@", callbackId);
     if (!self.locationData) {
-        self.locationData = [[[DGLocationData alloc] init] autorelease];
+ //       self.locationData = [[[DGLocationData alloc] init] autorelease];
     }
     
     DGLocationData* lData = self.locationData;
@@ -61,7 +61,7 @@ static GeofencingHelper *sharedGeofencingHelper = nil;
 - (void) saveLocationCallbackId:(NSString *) callbackId {
     NSLog(@"callbackId: %@", callbackId);
     if (!self.locationData) {
-        self.locationData = [[[DGLocationData alloc] init] autorelease];
+    //    self.locationData = [[[DGLocationData alloc] init] autorelease];
     }
     
     DGLocationData* lData = self.locationData;
@@ -98,7 +98,7 @@ static GeofencingHelper *sharedGeofencingHelper = nil;
         [dict setObject:@"enter" forKey:@"status"];
         [dict setObject:region.identifier forKey:@"fid"];
         NSString *jsStatement = [NSString stringWithFormat:@"Geofencing.regionMonitorUpdate(%@);", [dict JSONString]];
-        [self.webView stringByEvaluatingJavaScriptFromString:jsStatement];
+    //    [self.webView stringByEvaluatingJavaScriptFromString:jsStatement];
     }
 }
 
@@ -127,7 +127,7 @@ static GeofencingHelper *sharedGeofencingHelper = nil;
         [dict setObject:@"left" forKey:@"status"];
         [dict setObject:region.identifier forKey:@"fid"];
         NSString *jsStatement = [NSString stringWithFormat:@"Geofencing.regionMonitorUpdate(%@);", [dict JSONString]];
-        [self.webView stringByEvaluatingJavaScriptFromString:jsStatement];
+//        [self.webView stringByEvaluatingJavaScriptFromString:jsStatement];
     }
 }
 
@@ -152,7 +152,7 @@ static GeofencingHelper *sharedGeofencingHelper = nil;
     [dict setObject:[NSNumber numberWithDouble:oldLocation.coordinate.longitude] forKey:@"old_longitude"];
     
     NSString *jsStatement = [NSString stringWithFormat:@"Geofencing.locationMonitorUpdate(%@);", [dict JSONString]];
-    [self.webView stringByEvaluatingJavaScriptFromString:jsStatement];
+ //   [self.webView stringByEvaluatingJavaScriptFromString:jsStatement];
 }
 
 - (void)locationManager:(CLLocationManager *)manager monitoringDidFailForRegion:(CLRegion *)region withError:(NSError *)error {
@@ -259,10 +259,10 @@ static GeofencingHelper *sharedGeofencingHelper = nil;
 
 - (void) dispose {
     locationManager.delegate = nil;
-    [locationManager release];
+//    [locationManager release];
     self.locationData = nil;
-    [locationData release];
-    [sharedGeofencingHelper release];
+//    [locationData release];
+//    [sharedGeofencingHelper release];
 }
 
 + (NSString*) applicationDocumentsDirectory

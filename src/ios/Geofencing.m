@@ -7,6 +7,7 @@
 //
 
 #import "Geofencing.h"
+#import <Cordova/CDV.h>
 #import <Cordova/CDVViewController.h>
 
 @implementation Geofencing
@@ -24,7 +25,7 @@
 {
         //self.locationManager.delegate = nil;
         //self.locationManager = nil;
-        [super dealloc];
+        //[super dealloc];
 }
 
 - (BOOL) isSignificantLocationChangeMonitoringAvailable
@@ -242,7 +243,7 @@
         return;
     }
     NSMutableDictionary *options;
-    [command legacyArguments:nil andDict:&options];
+ //   [command legacyArguments:nil andDict:&options];
     [self addRegionToMonitor:options];
     
     [[GeofencingHelper sharedGeofencingHelper] returnRegionSuccess];
@@ -283,7 +284,7 @@
     CLLocationCoordinate2D coord = CLLocationCoordinate2DMake([latitude doubleValue], [longitude doubleValue]);
     CLRegion *region = [[CLRegion alloc] initCircularRegionWithCenter:coord radius:radius identifier:regionId];
     [[[GeofencingHelper sharedGeofencingHelper] locationManager] startMonitoringForRegion:region desiredAccuracy:kCLLocationAccuracyBestForNavigation];
-    [region release];
+ //   [region release];
 }
 
 - (void) removeRegionToMonitor:(NSMutableDictionary *)params {
@@ -295,7 +296,7 @@
     CLLocationCoordinate2D coord = CLLocationCoordinate2DMake([latitude doubleValue], [longitude doubleValue]);
     CLRegion *region = [[CLRegion alloc] initCircularRegionWithCenter:coord radius:10.0 identifier:regionId];
     [[[GeofencingHelper sharedGeofencingHelper] locationManager] stopMonitoringForRegion:region];
-    [region release];
+ //   [region release];
 }
 
 - (void)removeRegion:(CDVInvokedUrlCommand*)command {
@@ -347,7 +348,7 @@
         return;
     }
     NSMutableDictionary *options;
-    [command legacyArguments:nil andDict:&options];
+ //   [command legacyArguments:nil andDict:&options];
     [self removeRegionToMonitor:options];
     
     [[GeofencingHelper sharedGeofencingHelper] returnRegionSuccess];
@@ -365,10 +366,27 @@
     [posError setObject: [NSNumber numberWithInt: CDVCommandStatus_OK] forKey:@"code"];
     [posError setObject: @"Region Success" forKey: @"message"];
     [posError setObject: watchedRegions forKey: @"regionids"];
-    CDVPluginResult* result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:posError];
-    if (callbackId) {
-        [self writeJavascript:[result toSuccessCallbackString:callbackId]];
-    }
+    
+    
+        /*
+        CDVPluginResult* result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:posError];
+        if (callbackId) {
+            [self writeJavascript:[result toSuccessCallbackString:callbackId]];
+        }
+         */
+    
+    [self.commandDelegate runInBackground:^{
+        CDVPluginResult* result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:posError];
+        if (callbackId) {
+    //        [self writeJavascript:[result toSuccessCallbackString:callbackId]];
+            [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
+        }
+        
+        
+        
+        
+    }];
+    
     NSLog(@"watchedRegions: %@", watchedRegions);
 }
 
