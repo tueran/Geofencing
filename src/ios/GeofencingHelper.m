@@ -137,8 +137,8 @@ static GeofencingHelper *sharedGeofencingHelper = nil;
     NSLog(@"nsuserdefaults Ausgabe: %@", getHost);
     
     // NSURL Request
-    //NSString* geofencingUrl = [NSString stringWithFormat:@"https://%@/sf/regions/%@/enter?s=&token=%@", getHost, region.identifier, getUsertoken];
-    NSString* geofencingUrl = [NSString stringWithFormat:@"https://%@/sf/daniel/%@/enter?s=&token=%@", getHost, region.identifier, getUsertoken];
+    NSString* geofencingUrl = [NSString stringWithFormat:@"https://%@/sf/regions/%@/enter?s=&token=%@", getHost, region.identifier, getUsertoken];
+    //NSString* geofencingUrl = [NSString stringWithFormat:@"https://%@/sf/daniel/%@/enter?s=&token=%@", getHost, region.identifier, getUsertoken];
     NSURL* sfUrl = [NSURL URLWithString:geofencingUrl];
     NSLog(@"URL: %@", sfUrl);
     // set the request
@@ -240,8 +240,8 @@ static GeofencingHelper *sharedGeofencingHelper = nil;
     NSLog(@"nsuserdefaults Ausgabe: %@", getHost);
     
     // NSURL Request
-    //NSString* geofencingUrl = [NSString stringWithFormat:@"https://%@/sf/regions/%@/exit?s=&token=%@", getHost, region.identifier, getUsertoken];
-    NSString* geofencingUrl = [NSString stringWithFormat:@"https://%@/sf/daniel/%@/exit?s=&token=%@", getHost, region.identifier, getUsertoken];
+    NSString* geofencingUrl = [NSString stringWithFormat:@"https://%@/sf/regions/%@/exit?s=&token=%@", getHost, region.identifier, getUsertoken];
+    //NSString* geofencingUrl = [NSString stringWithFormat:@"https://%@/sf/daniel/%@/exit?s=&token=%@", getHost, region.identifier, getUsertoken];
     NSURL* sfUrl = [NSURL URLWithString:geofencingUrl];
     NSLog(@"URL: %@", sfUrl);
 
