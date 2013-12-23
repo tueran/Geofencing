@@ -1,83 +1,88 @@
 //
-// Geofencing.m
-// SITEFORUM
+//  GeofencingHelper.m
+//  GeofencingTest
 //
-// Created by SITEFORUM on 5/3/12.
-// Copyright (c) SITEFORUM. All rights reserved.
+//  Created by Daniel Mauer on 16.12.13.
+//
 //
 
 #import "GeofencingHelper.h"
 
+
 static GeofencingHelper *sharedGeofencingHelper = nil;
 
-@implementation DGLocationData
+#pragma mark - LocationData Implementation
+
+@implementation LocationData
 
 @synthesize locationStatus, locationInfo;
 @synthesize locationCallbacks;
 @synthesize geofenceCallbacks;
 
--(DGLocationData*) init
+-(LocationData*) init
 {
-    self = (DGLocationData*)[super init];
-    if (self)
-        {
+    self = (LocationData*)[super init];
+    if (self) {
         self.locationInfo = nil;
     }
     return self;
 }
--(void) dealloc
-{
-    self.locationInfo = nil;
-    self.locationCallbacks = nil;
-    self.geofenceCallbacks = nil;
-//    [super dealloc];
-}
 
 @end
 
+
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+#pragma mark - GeofencingHelper Implementation
 @implementation GeofencingHelper
 
 @synthesize webView;
 @synthesize locationManager;
-@synthesize didLaunchForRegionUpdate;
 @synthesize locationData;
+@synthesize didLaunchForRegionUpdate;
 @synthesize commandDelegate;
 
-- (void) saveGeofenceCallbackId:(NSString *) callbackId {
-    NSLog(@"callbackId: %@", callbackId);
+
+
+-(void)saveGeofenceCallbackId:(NSString *)callbackId
+{
     if (!self.locationData) {
- //       self.locationData = [[[DGLocationData alloc] init] autorelease];
+        self.locationData = [[LocationData alloc] init];
     }
     
-    DGLocationData* lData = self.locationData;
+    LocationData* lData = self.locationData;
     if (!lData.geofenceCallbacks) {
-        lData.geofenceCallbacks = [NSMutableArray array];//]WithCapacity:1];
+        lData.geofenceCallbacks = [NSMutableArray array];
     }
     
     // add the callbackId into the array so we can call back when get data
     [lData.geofenceCallbacks enqueue:callbackId];
 }
 
-- (void) saveLocationCallbackId:(NSString *) callbackId {
-    NSLog(@"callbackId: %@", callbackId);
+-(void)saveLocationCallbackId:(NSString *)callbackId
+{
     if (!self.locationData) {
-    //    self.locationData = [[[DGLocationData alloc] init] autorelease];
+        self.locationData = [[LocationData alloc] init];
     }
     
-    DGLocationData* lData = self.locationData;
+    LocationData* lData = self.locationData;
     if (!lData.locationCallbacks) {
-        lData.locationCallbacks = [NSMutableArray array];//]WithCapacity:1];
+        lData.locationCallbacks = [NSMutableArray array];
     }
     
-    // add the callbackId into the array so we can call back when get data
+    // add the callbackId into the array so we cann call back when get data
     [lData.locationCallbacks enqueue:callbackId];
 }
+
+
+#pragma mark - location Manager
 
 - (void) locationManager:(CLLocationManager *)manager didEnterRegion:(CLRegion *)region
 {
     if (self.didLaunchForRegionUpdate) {
         NSString *path = [GeofencingHelper applicationDocumentsDirectory];
-        NSString *finalPath = [path stringByAppendingPathComponent:@"notifications.dg"];
+        NSString *finalPath = [path stringByAppendingPathComponent:@"notifications.txt"];
+        
         NSMutableArray *updates = [NSMutableArray arrayWithContentsOfFile:finalPath];
         
         if (!updates) {
@@ -93,20 +98,95 @@ static GeofencingHelper *sharedGeofencingHelper = nil;
         [updates addObject:update];
         
         [updates writeToFile:finalPath atomically:YES];
+        
+        // SITEFORUM Stuff
+        
+        
+        
+        NSLog(@"-------------------------------------");
+        NSLog(@"-----> E N T E R   R E G I O N <-----");
+        NSLog(@"-------------------------------------");
+        
     } else {
         NSMutableDictionary *dict = [NSMutableDictionary dictionary];
         [dict setObject:@"enter" forKey:@"status"];
         [dict setObject:region.identifier forKey:@"fid"];
         NSString *jsStatement = [NSString stringWithFormat:@"Geofencing.regionMonitorUpdate(%@);", [dict JSONString]];
-    //    [self.webView stringByEvaluatingJavaScriptFromString:jsStatement];
+        [self.webView stringByEvaluatingJavaScriptFromString:jsStatement];
+        
+        // Remove for GoLive and change it
+        NSString *path = [GeofencingHelper applicationDocumentsDirectory];
+        NSString *finalPath2 = [path stringByAppendingPathComponent:@"siteforum_geofencing.txt"];
+        
+        NSMutableArray *dicts = [NSMutableArray arrayWithContentsOfFile:finalPath2];
+        
+        if (!dicts) {
+            dicts = [NSMutableArray array];
+        }
+        
+        [dicts addObject:dict];
+        [dicts writeToFile:finalPath2 atomically:YES];
+        
     }
+    
+    
+    // Load the storage data from nsuserdefaults
+    NSUserDefaults *preferences = [NSUserDefaults standardUserDefaults];
+    NSString *getHost = [preferences stringForKey:@"GeofencingHost"];
+    NSString *getUsertoken = [preferences stringForKey:@"Usertoken"];
+    NSLog(@"nsuserdefaults Ausgabe: %@", getHost);
+    
+    // NSURL Request
+    //NSString* geofencingUrl = [NSString stringWithFormat:@"https://%@/sf/regions/%@/enter?s=&token=%@", getHost, region.identifier, getUsertoken];
+    NSString* geofencingUrl = [NSString stringWithFormat:@"https://%@/sf/daniel/%@/enter?s=&token=%@", getHost, region.identifier, getUsertoken];
+    NSURL* sfUrl = [NSURL URLWithString:geofencingUrl];
+    NSLog(@"URL: %@", sfUrl);
+    // set the request
+    NSURLRequest* sfRequest = [NSURLRequest requestWithURL:sfUrl];
+    NSOperationQueue* sfQueue = [[NSOperationQueue alloc] init];
+    __block NSUInteger tries = 0;
+    
+    typedef void (^CompletionBlock)(NSURLResponse *, NSData *, NSError *);
+    __block CompletionBlock completionHandler = nil;
+    
+    // Block to start the request
+    dispatch_block_t enqueueBlock = ^{
+        [NSURLConnection sendAsynchronousRequest:sfRequest queue:sfQueue completionHandler:completionHandler];
+    };
+    
+    completionHandler = ^(NSURLResponse *sfResponse, NSData *sfData, NSError *sfError) {
+        tries++;
+        if (sfError) {
+            if (tries < 3) {
+                enqueueBlock();
+                NSLog(@"Error: %@", sfError);
+            } else {
+                NSLog(@"Abbruch nach 3 Versuchen.");
+            }
+        } else {
+            NSString* myResponse;
+            myResponse = [[NSString alloc] initWithData:sfData encoding:NSUTF8StringEncoding];
+            NSLog(@"Response: %@", myResponse);
+            
+            NSLog(@"----------------------------------------------------------");
+            NSLog(@"-----> E N T E R   R E G I O N   C O N D I T I O N  <-----");
+            NSLog(@"----------------------------------------------------------");
+        }
+    };
+    
+    enqueueBlock();
+    
+    
+    
+    
 }
+
 
 - (void) locationManager:(CLLocationManager *)manager didExitRegion:(CLRegion *)region
 {
     if (self.didLaunchForRegionUpdate) {
         NSString *path = [GeofencingHelper applicationDocumentsDirectory];
-        NSString *finalPath = [path stringByAppendingPathComponent:@"notifications.dg"];
+        NSString *finalPath = [path stringByAppendingPathComponent:@"notifications.txt"];
         NSMutableArray *updates = [NSMutableArray arrayWithContentsOfFile:finalPath];
         
         if (!updates) {
@@ -122,14 +202,90 @@ static GeofencingHelper *sharedGeofencingHelper = nil;
         [updates addObject:update];
         
         [updates writeToFile:finalPath atomically:YES];
+        
+        
+        
+        
+        
     } else {
         NSMutableDictionary *dict = [NSMutableDictionary dictionary];
         [dict setObject:@"left" forKey:@"status"];
         [dict setObject:region.identifier forKey:@"fid"];
         NSString *jsStatement = [NSString stringWithFormat:@"Geofencing.regionMonitorUpdate(%@);", [dict JSONString]];
-//        [self.webView stringByEvaluatingJavaScriptFromString:jsStatement];
+        [self.webView stringByEvaluatingJavaScriptFromString:jsStatement];
+        
+        
+        // Remove for GoLive and change it
+        
+        NSString *path = [GeofencingHelper applicationDocumentsDirectory];
+        NSString *finalPath2 = [path stringByAppendingPathComponent:@"siteforum_geofencing.txt"];
+        
+        NSMutableArray *dicts = [NSMutableArray arrayWithContentsOfFile:finalPath2];
+        
+        if (!dicts) {
+            dicts = [NSMutableArray array];
+        }
+        
+        [dicts addObject:dict];
+        [dicts writeToFile:finalPath2 atomically:YES];
+
     }
+    
+    
+    
+    // Load the storage data from nsuserdefaults
+    NSUserDefaults *preferences = [NSUserDefaults standardUserDefaults];
+    NSString *getHost = [preferences stringForKey:@"GeofencingHost"];
+    NSString *getUsertoken = [preferences stringForKey:@"Usertoken"];
+    NSLog(@"nsuserdefaults Ausgabe: %@", getHost);
+    
+    // NSURL Request
+    //NSString* geofencingUrl = [NSString stringWithFormat:@"https://%@/sf/regions/%@/exit?s=&token=%@", getHost, region.identifier, getUsertoken];
+    NSString* geofencingUrl = [NSString stringWithFormat:@"https://%@/sf/daniel/%@/exit?s=&token=%@", getHost, region.identifier, getUsertoken];
+    NSURL* sfUrl = [NSURL URLWithString:geofencingUrl];
+    NSLog(@"URL: %@", sfUrl);
+
+    // set the request
+    NSURLRequest* sfRequest = [NSURLRequest requestWithURL:sfUrl];
+    NSOperationQueue* sfQueue = [[NSOperationQueue alloc] init];
+    __block NSUInteger tries = 0;
+    
+    typedef void (^CompletionBlock)(NSURLResponse *, NSData *, NSError *);
+    __block CompletionBlock completionHandler = nil;
+    
+    // Block to start the request
+    dispatch_block_t enqueueBlock = ^{
+        [NSURLConnection sendAsynchronousRequest:sfRequest queue:sfQueue completionHandler:completionHandler];
+    };
+    
+    completionHandler = ^(NSURLResponse *sfResponse, NSData *sfData, NSError *sfError) {
+        tries++;
+        if (sfError) {
+            if (tries < 3) {
+                enqueueBlock();
+                NSLog(@"Error: %@", sfError);
+            } else {
+                NSLog(@"Abbruch nach 3 Versuchen.");
+            }
+        } else {
+            NSString* myResponse;
+            myResponse = [[NSString alloc] initWithData:sfData encoding:NSUTF8StringEncoding];
+            NSLog(@"Response: %@", myResponse);
+            
+            NSLog(@"----------------------------------------------------------");
+            NSLog(@"----->  E X I T   R E G I O N   C O N D I T I O N   <-----");
+            NSLog(@"----------------------------------------------------------");
+        }
+    };
+    
+    enqueueBlock();
+    
+    
+    
+    
+    
 }
+
 
 -(void) locationManager:(CLLocationManager *)manager didUpdateToLocation:(CLLocation *)newLocation fromLocation:(CLLocation *)oldLocation {
     NSMutableDictionary *dict = [NSMutableDictionary dictionary];
@@ -152,38 +308,73 @@ static GeofencingHelper *sharedGeofencingHelper = nil;
     [dict setObject:[NSNumber numberWithDouble:oldLocation.coordinate.longitude] forKey:@"old_longitude"];
     
     NSString *jsStatement = [NSString stringWithFormat:@"Geofencing.locationMonitorUpdate(%@);", [dict JSONString]];
- //   [self.webView stringByEvaluatingJavaScriptFromString:jsStatement];
+    [self.webView stringByEvaluatingJavaScriptFromString:jsStatement];
+    
+    // Remove for GoLive and change it
+    
+    NSString *path = [GeofencingHelper applicationDocumentsDirectory];
+    NSString *finalPath2 = [path stringByAppendingPathComponent:@"siteforum_geofencing_didUpdateToLocation_fromLocation.txt"];
+    
+    NSMutableArray *dicts = [NSMutableArray arrayWithContentsOfFile:finalPath2];
+    
+    if (!dicts) {
+        dicts = [NSMutableArray array];
+    }
+    
+    [dicts addObject:dict];
+    [dicts writeToFile:finalPath2 atomically:YES];
+
+    
 }
+
 
 - (void)locationManager:(CLLocationManager *)manager monitoringDidFailForRegion:(CLRegion *)region withError:(NSError *)error {
     NSMutableDictionary* posError = [NSMutableDictionary dictionaryWithCapacity:2];
+    
     [posError setObject: [NSNumber numberWithInt: error.code] forKey:@"code"];
     [posError setObject: region.identifier forKey: @"regionid"];
-    CDVPluginResult* result = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsDictionary:posError];
+    
+    CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsDictionary:posError];
     for (NSString *callbackId in self.locationData.geofenceCallbacks) {
         if (callbackId) {
-            [self.commandDelegate sendPluginResult:result callbackId:callbackId];
+            [self.commandDelegate sendPluginResult:pluginResult callbackId:callbackId];
         }
     }
+    
+
+    
     self.locationData.geofenceCallbacks = [NSMutableArray array];
 }
 
 - (void)locationManager:(CLLocationManager *)manager didFailWithError:(NSError *)error{
     NSMutableDictionary* posError = [NSMutableDictionary dictionaryWithCapacity:2];
     [posError setObject: [NSNumber numberWithInt: error.code] forKey:@"code"];
-    CDVPluginResult* result = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsDictionary:posError];
+    
+    CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsDictionary:posError];
     for (NSString *callbackId in self.locationData.locationCallbacks) {
         if (callbackId) {
-            [self.commandDelegate sendPluginResult:result callbackId:callbackId];
+            [self.commandDelegate sendPluginResult:pluginResult callbackId:callbackId];
         }
     }
+    
+
+    
     self.locationData.locationCallbacks = [NSMutableArray array];
 }
+
+
+
+
+
+
+
 
 - (void) returnRegionSuccess; {
     NSMutableDictionary* posError = [NSMutableDictionary dictionaryWithCapacity:2];
     [posError setObject: [NSNumber numberWithInt: CDVCommandStatus_OK] forKey:@"code"];
     [posError setObject: @"Region Success" forKey: @"message"];
+    
+  
     CDVPluginResult* result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:posError];
     for (NSString *callbackId in self.locationData.geofenceCallbacks) {
         if (callbackId) {
@@ -193,30 +384,37 @@ static GeofencingHelper *sharedGeofencingHelper = nil;
     self.locationData.geofenceCallbacks = [NSMutableArray array];
 }
 
+
 - (void) returnLocationSuccess; {
     NSMutableDictionary* posError = [NSMutableDictionary dictionaryWithCapacity:2];
     [posError setObject: [NSNumber numberWithInt: CDVCommandStatus_OK] forKey:@"code"];
     [posError setObject: @"Region Success" forKey: @"message"];
-    CDVPluginResult* result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:posError];
-    for (NSString *callbackId in self.locationData.locationCallbacks) {
+    
+    CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:posError];
+    for (NSString* callbackId in self.locationData.locationCallbacks) {
         if (callbackId) {
-            [self.commandDelegate sendPluginResult:result callbackId:callbackId];
+            [self.commandDelegate sendPluginResult:pluginResult callbackId:callbackId];
         }
     }
+    
+
     self.locationData.locationCallbacks = [NSMutableArray array];
 }
+
 
 - (void) returnLocationError: (NSUInteger) errorCode withMessage: (NSString*) message
 {
     NSMutableDictionary* posError = [NSMutableDictionary dictionaryWithCapacity:2];
     [posError setObject: [NSNumber numberWithInt: errorCode] forKey:@"code"];
     [posError setObject: message ? message : @"" forKey: @"message"];
-    CDVPluginResult* result = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsDictionary:posError];
+
+    CDVPluginResult* result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:posError];
     for (NSString *callbackId in self.locationData.locationCallbacks) {
         if (callbackId) {
             [self.commandDelegate sendPluginResult:result callbackId:callbackId];
         }
     }
+    
     self.locationData.locationCallbacks = [NSMutableArray array];
 }
 
@@ -225,12 +423,16 @@ static GeofencingHelper *sharedGeofencingHelper = nil;
     NSMutableDictionary* posError = [NSMutableDictionary dictionaryWithCapacity:2];
     [posError setObject: [NSNumber numberWithInt: errorCode] forKey:@"code"];
     [posError setObject: message ? message : @"" forKey: @"message"];
-    CDVPluginResult* result = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsDictionary:posError];
+    
+    CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsDictionary:posError];
     for (NSString *callbackId in self.locationData.geofenceCallbacks) {
         if (callbackId) {
-            [self.commandDelegate sendPluginResult:result callbackId:callbackId];
+            [self.commandDelegate sendPluginResult:pluginResult callbackId:callbackId];
         }
     }
+    
+
+    
     self.locationData.geofenceCallbacks = [NSMutableArray array];
 }
 
@@ -240,30 +442,24 @@ static GeofencingHelper *sharedGeofencingHelper = nil;
         self.locationManager = [[CLLocationManager alloc] init];
         self.locationManager.delegate = self; // Tells the location manager to send updates to this object
         self.locationData = nil;
+
     }
     return self;
 }
 
 +(GeofencingHelper *)sharedGeofencingHelper
 {
-        //objects using shard instance are responsible for retain/release count
-        //retain count must remain 1 to stay in mem
+    //objects using shard instance are responsible for retain/release count
+    //retain count must remain 1 to stay in mem
     
-        if (!sharedGeofencingHelper)
-        {
-                sharedGeofencingHelper = [[GeofencingHelper alloc] init];
-        }
-        
-        return sharedGeofencingHelper;
+    if (!sharedGeofencingHelper)
+    {
+        sharedGeofencingHelper = [[GeofencingHelper alloc] init];
+    }
+    
+    return sharedGeofencingHelper;
 }
 
-- (void) dispose {
-    locationManager.delegate = nil;
-//    [locationManager release];
-    self.locationData = nil;
-//    [locationData release];
-//    [sharedGeofencingHelper release];
-}
 
 + (NSString*) applicationDocumentsDirectory
 {
@@ -273,3 +469,4 @@ static GeofencingHelper *sharedGeofencingHelper = nil;
 }
 
 @end
+ 

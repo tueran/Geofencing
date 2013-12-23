@@ -1,4 +1,4 @@
-var exec = require('cordova/exec');
+cordova.define("com.siteforum.plugins.geofencing.Geofencing", function(require, exports, module) {var exec = require('cordova/exec');
 /**
  * Constructor
  */
@@ -10,6 +10,14 @@ Geofencing.prototype.addRegion = function(success, fail, params) {
 
 Geofencing.prototype.removeRegion = function(success, fail, params) {
   exec(success, fail, "Geofencing", "removeRegion", [params || {}]);
+};
+               
+Geofencing.prototype.setHost = function(success, fail, params) {
+   exec(success, fail, "Geofencing", "setHost", [params || {}]);
+};
+               
+Geofencing.prototype.setToken = function(success, fail, params) {
+   exec(success, fail, "Geofencing", "setToken", [params || {}]);
 };
 
 /*
@@ -70,3 +78,4 @@ Geofencing.prototype.locationMonitorUpdate = function(locationupdate) {
 // exports
 var Geofencing = new Geofencing();
 module.exports = Geofencing;
+});

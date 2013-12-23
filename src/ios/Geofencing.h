@@ -1,18 +1,19 @@
 //
-// Geofencing.h
-// SITEFORUM
-// Sections of this code adapted from Apache Cordova
+//  Geofencing.h
+//  GeofencingTest
 //
-// Created by Dov Goldberg on 5/3/12.
-// Copyright (c) 2013 SITEFORUM. All rights reserved.
+//  Created by Daniel Mauer on 16.12.13.
 //
+//
+
+//#import <Cordova/Cordova.h>
 
 #import <Foundation/Foundation.h>
-#import <CoreLocation/CoreLocation.h>
-
 #import <Cordova/CDVPlugin.h>
-
+#import <Cordova/CDV.h>
+#import <CoreLocation/CoreLocation.h>
 #import "GeofencingHelper.h"
+#import <MapKit/MapKit.h>
 
 #define KEY_REGION_ID @"fid"
 #define KEY_REGION_LAT @"latitude"
@@ -33,6 +34,8 @@
 
 #pragma mark Plugin Functions
 - (void) addRegion:(CDVInvokedUrlCommand*)command;
+- (void) setHost:(CDVInvokedUrlCommand*)command;
+- (void) setToken:(CDVInvokedUrlCommand*)command;
 - (void) removeRegion:(CDVInvokedUrlCommand*)command;
 - (void) getWatchedRegionIds:(CDVInvokedUrlCommand*)command;
 - (void) getPendingRegionUpdates:(CDVInvokedUrlCommand*)command;
