@@ -1,3 +1,6 @@
+cordova.define("com.siteforum.plugins.geofencing.Geofencing", function(require, exports, module) { // cordova.define("com.siteforum.plugins.geofencing.Geofencing", function(require, exports, module) {var exec = require('cordova/exec');
+
+var exec = require('cordova/exec');
 
 /**
  * Constructor
@@ -78,4 +81,6 @@ Geofencing.prototype.locationMonitorUpdate = function(locationupdate) {
 // exports
 var Geofencing = new Geofencing();
 module.exports = Geofencing;
+// });
 
+});
