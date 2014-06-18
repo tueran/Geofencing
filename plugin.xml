@@ -21,5 +21,10 @@
          <source-file src="src/ios/Geofencing.m" />
          <header-file src="src/ios/GeofencingHelper.h" />
          <source-file src="src/ios/GeofencingHelper.m" />
+
+         <!-- framework src="Foundation.framework" / -->
+         <!-- framework src="CoreLocation.framework" / -->
+         <!-- framework src="MapKit.framework" / -->
+
     </platform>
 </plugin>
