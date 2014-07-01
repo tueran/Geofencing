@@ -23,7 +23,7 @@
     self = (Geofencing*)[super initWithWebView:(UIWebView*)theWebView];
     if (self)
     {
-    
+        
     }
     return self;
 }
@@ -152,7 +152,7 @@
         return;
     }
     
-
+    
     NSMutableDictionary *options = [command.arguments objectAtIndex:0];
     
     [self addRegionToMonitor:options];
@@ -164,7 +164,7 @@
 
 - (void) addRegionToMonitor:(NSMutableDictionary *)params {
     // Parse Incoming Params
-
+    
     NSString *regionId = [[params objectForKey:KEY_REGION_ID] stringValue];
     NSString *latitude = [params objectForKey:KEY_REGION_LAT];
     NSString *longitude = [params objectForKey:KEY_REGION_LNG];
@@ -180,7 +180,7 @@
 
 - (void) removeRegionToMonitor:(NSMutableDictionary *)params {
     // Parse Incoming Params
-//    NSString *regionId = [params objectForKey:KEY_REGION_ID];
+    //    NSString *regionId = [params objectForKey:KEY_REGION_ID];
     NSString *regionId = [[params objectForKey:KEY_REGION_ID] stringValue];
     NSString *latitude = [params objectForKey:KEY_REGION_LAT];
     NSString *longitude = [params objectForKey:KEY_REGION_LNG];
@@ -243,7 +243,7 @@
         [[GeofencingHelper sharedGeofencingHelper] returnGeofenceError:REGIONMONITORINGPERMISSIONDENIED withMessage: @"User has restricted the use of region monitoring"];
         return;
     }
-
+    
     NSMutableDictionary *options = [command.arguments objectAtIndex:0];
     [self removeRegionToMonitor:options];
     
@@ -300,8 +300,20 @@
     NSSet *regions = [[GeofencingHelper sharedGeofencingHelper] locationManager].monitoredRegions;
     NSLog(@"Regions 111: %@", regions);
     NSLog(@"getWatchedRegionIds.regions: %@", regions);
+    
+    
+    NSMutableArray* geofencingRegionArray = [[NSMutableArray alloc] init];
+    
+    for (id region in regions.allObjects) {
+        if ([region isKindOfClass:[CLCircularRegion class]]) {
+            [geofencingRegionArray addObject:region];
+        } else if ([region isKindOfClass:[CLBeaconRegion class]]) {
+            //NSLog(@"hier ist eine Beacon Region");
+        }
+    }
+    
     NSMutableArray *watchedRegions = [NSMutableArray array];
-    for (CLRegion *region in regions) {
+    for (CLRegion *region in geofencingRegionArray) {
         [watchedRegions addObject:region.identifier];
         NSLog(@"region.identifier: %@", region.identifier);
     }
@@ -314,16 +326,14 @@
     if (callbackId) {
         //        [self writeJavascript:[result toSuccessCallbackString:callbackId]];
         [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+        //NSLog(@"Geofencing posError: %@", posError);
     }
-
-
-    
     NSLog(@"watchedRegions: %@", watchedRegions);
 }
 
 
 - (void) startMonitoringSignificantLocationChanges:(CDVInvokedUrlCommand*)command {
-
+    
     NSString* callbackId = command.callbackId;
     NSLog(@"MonitoringSignificationChanges: %@", command.arguments);
     
@@ -340,7 +350,7 @@
             return;
         }
     }
-
+    
     NSLog(@"isAuthorized %hhd", [self isAuthorized]);
     if (![self isAuthorized])
     {
@@ -443,7 +453,7 @@
         [self.commandDelegate sendPluginResult:result callbackId:callbackId];
     }
     
- 
+    
     NSLog(@"pendingupdates: %@", updates);
 }
 
